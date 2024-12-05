@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import '../gatescomponents/diloag_box.dart';
+import 'diloag_box.dart';
 
+/// This widget represents the main UI for designing gates with draggable images,
+/// interactive nodes, and the ability to connect nodes with lines.
 class GatesLinks extends StatefulWidget {
   const GatesLinks({super.key});
 
@@ -8,9 +10,16 @@ class GatesLinks extends StatefulWidget {
   State<GatesLinks> createState() => _GatesDrawLines();
 }
 
+/// Manages the state for gate design, handling dropped images, line connections,
+/// and user interactions such as toggling line drawing and deleting nodes/lines.
 class _GatesDrawLines extends State<GatesLinks> {
+  // Gate details  [{id: 1733419355838, path: assets/gates/andgate.png, position: Offset(620.5, 145.2), noOfNodes: 2}]
   List<Map<String, dynamic>> droppedImage = [];
+
+  // store line [start,end,whichNodeItConnectedAtEndGate]
   Map<int, List<int>> lineCardsAxis = {};
+
+  //To store recent selected gate to join [1,2]
   List<int> twoCardsToJoin = [];
   bool allowdrawLine = false;
   List<int> selectedItemToDelete = [];
@@ -97,6 +106,7 @@ class _GatesDrawLines extends State<GatesLinks> {
                 }
 
                 setState(() {
+                  //Set Gate details
                   droppedImage.add({
                     'id': DateTime.now().millisecondsSinceEpoch,
                     'path': details.data['path'],
@@ -125,6 +135,7 @@ class _GatesDrawLines extends State<GatesLinks> {
                             Positioned.fill(
                               child: GestureDetector(
                                 onTap: () {
+                                  // Delete a line
                                   setState(() {
                                     selectedItemToDelete = [
                                       entry.key,
@@ -175,6 +186,7 @@ class _GatesDrawLines extends State<GatesLinks> {
                             top: image['position'].dy,
                             child: GestureDetector(
                               onTap: () {
+                                // select gates to join with a line
                                 if (allowdrawLine) {
                                   setState(() {
                                     if (twoCardsToJoin.length < 2) {
@@ -258,6 +270,7 @@ class _GatesDrawLines extends State<GatesLinks> {
                                               });
                                             }
                                           },
+                                          // Display number of nodes and set height
                                           child: Image.asset(
                                             'assets/gates/node.png',
                                             width: 50,
@@ -297,6 +310,7 @@ class _GatesDrawLines extends State<GatesLinks> {
     );
   }
 
+  // updating the offset accurate to the end of node of a gate
   Offset updateEndPosition(Offset end, dynamic nodeplace, dynamic secondgate) {
     var gate = droppedImage.firstWhere((gate) => gate['id'] == secondgate);
 
@@ -383,6 +397,7 @@ class LinePrinter extends CustomPainter {
   }
 }
 
+// card Widget (reuseable)
 Widget _buildImgCard(String path) {
   return Draggable<Map<String, dynamic>>(
     data: {'path': path},
