@@ -13,6 +13,7 @@ class _GatesDrawLines extends State<GatesLinks> {
   Map<int, List<int>> lineCardsAxis = {};
   List<int> twoCardsToJoin = [];
   bool allowdrawLine = false;
+  List<int> selectedItemToDelete = [];
 
   @override
   Widget build(BuildContext context) {
@@ -29,15 +30,58 @@ class _GatesDrawLines extends State<GatesLinks> {
               _buildImgCard('assets/gates/notgate.png'),
               _buildImgCard('assets/gates/orgate.png'),
               _buildImgCard('assets/gates/andgate.png'),
-              ElevatedButton(
-                onPressed: () {
-                  _onClickbuttn();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: allowdrawLine ? Colors.red : Colors.green,
-                ),
-                child: Text(
-                    allowdrawLine ? "Tap on Image" : "Toggle Line Drawing"),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      _onClickbuttn();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          allowdrawLine ? Colors.red : Colors.green,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 5,
+                    ),
+                    child: Text(
+                      allowdrawLine ? "Tap on Image" : "Toggle Line Drawing",
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  ElevatedButton(
+                    onPressed: () {
+                      _deleteNode();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 12),
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 5,
+                    ),
+                    child: const Text(
+                      "Delete Node or Line",
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -54,7 +98,7 @@ class _GatesDrawLines extends State<GatesLinks> {
 
                 setState(() {
                   droppedImage.add({
-                    'id': droppedImage.length + 1,
+                    'id': DateTime.now().millisecondsSinceEpoch,
                     'path': details.data['path'],
                     'position':
                         Offset(localPosition.dx - 50, localPosition.dy - 150),
@@ -77,40 +121,52 @@ class _GatesDrawLines extends State<GatesLinks> {
                       children: [
                         // Draw the lines in the background
                         for (var entry in lineCardsAxis.entries)
-                          Positioned.fill(
-                            child: CustomPaint(
-                              painter: LinePrinter(
-                                start: Offset(
-                                  droppedImage
-                                          .firstWhere(
-                                            (img) =>
-                                                img['id'] == entry.value[0],
-                                            orElse: () =>
-                                                {'position': Offset.zero},
-                                          )['position']
-                                          .dx +
-                                      114, // Increase X by 20
-                                  droppedImage
-                                          .firstWhere(
-                                            (img) =>
-                                                img['id'] == entry.value[0],
-                                            orElse: () =>
-                                                {'position': Offset.zero},
-                                          )['position']
-                                          .dy +
-                                      5, // Keep Y as it is
-                                ),
-                                end: updateEndPosition(
-                                  droppedImage.firstWhere(
-                                    (img) => img['id'] == entry.value[1],
-                                    orElse: () => {'position': Offset.zero},
-                                  )['position'],
-                                  entry.value[2],
-                                  entry.value[1],
+                          if (entry.value[2] != 0)
+                            Positioned.fill(
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    selectedItemToDelete = [
+                                      entry.key,
+                                      999 // Line identifier
+                                    ];
+                                    print(lineCardsAxis);
+                                  });
+                                },
+                                child: CustomPaint(
+                                  painter: LinePrinter(
+                                    start: Offset(
+                                      droppedImage
+                                              .firstWhere(
+                                                (img) =>
+                                                    img['id'] == entry.value[0],
+                                                orElse: () =>
+                                                    {'position': Offset.zero},
+                                              )['position']
+                                              .dx +
+                                          114, // Increase X by 20
+                                      droppedImage
+                                              .firstWhere(
+                                                (img) =>
+                                                    img['id'] == entry.value[0],
+                                                orElse: () =>
+                                                    {'position': Offset.zero},
+                                              )['position']
+                                              .dy +
+                                          5, // Keep Y as it is
+                                    ),
+                                    end: updateEndPosition(
+                                      droppedImage.firstWhere(
+                                        (img) => img['id'] == entry.value[1],
+                                        orElse: () => {'position': Offset.zero},
+                                      )['position'],
+                                      entry.value[2],
+                                      entry.value[1],
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
 
                         // Position the images and allow them to be dragged
                         for (var image in droppedImage)
@@ -130,12 +186,18 @@ class _GatesDrawLines extends State<GatesLinks> {
                                           [
                                         twoCardsToJoin[0],
                                         twoCardsToJoin[1],
+                                        0
                                       ];
                                       twoCardsToJoin.clear();
                                       allowdrawLine = !allowdrawLine;
-                                      print(twoCardsToJoin);
-                                      print(allowdrawLine);
                                     }
+                                  });
+                                } else {
+                                  setState(() {
+                                    selectedItemToDelete = [
+                                      image['id'],
+                                      888 // Node identifier
+                                    ];
                                   });
                                 }
                               },
@@ -148,37 +210,6 @@ class _GatesDrawLines extends State<GatesLinks> {
 
                                   lineCardsAxis.forEach((lineId, connectedIds) {
                                     if (connectedIds.contains(image['id'])) {
-                                      var otherImageId =
-                                          connectedIds.firstWhere(
-                                              (id) => id != image['id']);
-                                      var otherImage = droppedImage.firstWhere(
-                                          (img) => img['id'] == otherImageId);
-
-                                      Offset startPosition = Offset(
-                                        droppedImage
-                                                .firstWhere((img) =>
-                                                    img['id'] ==
-                                                    connectedIds[0])['position']
-                                                .dx +
-                                            114,
-                                        droppedImage
-                                                .firstWhere((img) =>
-                                                    img['id'] ==
-                                                    connectedIds[0])['position']
-                                                .dy +
-                                            5,
-                                      );
-
-                                      Offset endPosition = updateEndPosition(
-                                        droppedImage.firstWhere((img) =>
-                                            img['id'] ==
-                                            connectedIds[1])['position'],
-                                        connectedIds.length > 2
-                                            ? connectedIds[2]
-                                            : null,
-                                        connectedIds[1],
-                                      );
-
                                       lineCardsAxis[lineId] = [
                                         connectedIds[0],
                                         connectedIds[1],
@@ -219,6 +250,9 @@ class _GatesDrawLines extends State<GatesLinks> {
                                                     index + 1
                                                   ];
                                                   print(lineCardsAxis);
+                                                  allowdrawLine =
+                                                      !allowdrawLine;
+
                                                   twoCardsToJoin.clear();
                                                 }
                                               });
@@ -285,6 +319,10 @@ class _GatesDrawLines extends State<GatesLinks> {
     double updatedEndX = end.dx - 50;
     double updatedEndY = end.dy - 13 + nodeOffsetY;
 
+    if (noOfNodes == 1) {
+      updatedEndY += 20;
+    }
+
     return Offset(updatedEndX, updatedEndY);
   }
 
@@ -294,6 +332,28 @@ class _GatesDrawLines extends State<GatesLinks> {
     });
 
     print('allowdrawLine: $allowdrawLine');
+  }
+
+  void _deleteNode() {
+    if (selectedItemToDelete.isEmpty) return;
+
+    setState(() {
+      if (selectedItemToDelete[1] == 999) {
+        // Delete line
+        print(lineCardsAxis);
+        print(selectedItemToDelete);
+        lineCardsAxis.remove(selectedItemToDelete[0]);
+      } else if (selectedItemToDelete[1] == 888) {
+        // Delete node
+        droppedImage.removeWhere((img) => img['id'] == selectedItemToDelete[0]);
+
+        // Remove associated lines
+        lineCardsAxis.removeWhere(
+            (key, value) => value.contains(selectedItemToDelete[0]));
+      }
+
+      selectedItemToDelete.clear();
+    });
   }
 }
 
@@ -305,7 +365,6 @@ class LinePrinter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    print('$start and $end');
     final paint = Paint()
       ..color = Colors.black
       ..strokeWidth = 4.0
